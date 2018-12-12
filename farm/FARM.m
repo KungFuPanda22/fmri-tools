@@ -11,7 +11,7 @@ function FARM(fMRI_filename, lambda, output_foldername, thres, dirname)
 	addpath(path);
 	
 	% load nii fmri file 
-	intial_location=load_nii(fMRI_filename);
+	intial_location=load_untouch_nii(fMRI_filename);
 	y = intial_location.img;
 	
     Size = size(y);
@@ -89,7 +89,7 @@ function FARM(fMRI_filename, lambda, output_foldername, thres, dirname)
     for i = 1:a
         for j = 1:b
             for k = 1:c
-                if (mean(y(i,j,k,:)) > 6000)
+                if (mean(y(i,j,k,:)) > thres)
                     invbeta1(i,j,k) = beta1(itemp);
                     invbeta2(i,j,k) = beta2(itemp);
                     invbeta3(i,j,k) = beta3(itemp);
@@ -104,18 +104,18 @@ function FARM(fMRI_filename, lambda, output_foldername, thres, dirname)
     nii_file = make_nii(single(invbeta1));
     nii_file.hdr = intial_location.hdr;
     nii_file.hdr.dime.dim(5) = 1;
-    save_nii(nii_file,strcat(output_foldername,'/beta1.nii.gz'));
+    save_untouch_nii(nii_file,strcat(output_foldername,'/beta1.nii.gz'));
     nii_file = make_nii(single(invbeta2));
     nii_file.hdr = intial_location.hdr;
     nii_file.hdr.dime.dim(5) = 1;
-    save_nii(nii_file,strcat(output_foldername,'/beta2.nii.gz'));
+    save_untouch_nii(nii_file,strcat(output_foldername,'/beta2.nii.gz'));
     nii_file = make_nii(single(invbeta3));
     nii_file.hdr = intial_location.hdr;
     nii_file.hdr.dime.dim(5) = 1;
-    save_nii(nii_file,strcat(output_foldername,'/steps.nii.gz'));
+    save_untouch_nii(nii_file,strcat(output_foldername,'/steps.nii.gz'));
     nii_file = make_nii(single(invbeta4));
     nii_file.hdr = intial_location.hdr;
     nii_file.hdr.dime.dim(5) = 1;
-    save_nii(nii_file,strcat(output_foldername,'/residuals.nii.gz'));
+    save_untouch_nii(nii_file,strcat(output_foldername,'/residuals.nii.gz'));
     clear
     quit
