@@ -73,8 +73,10 @@ function FARM(fMRI_filename, lambda, output_foldername, thres, dirname)
             Beta(i1,(i1+1):b1) = beta((i1):(b1-1));
         end
         
-         beta3(i1) = steps;
-         beta4(i1) = (residuals)^2;
+        
+        
+        beta3(i1) = steps;
+        beta4(i1) = (residuals)^2;
         
         
     end
@@ -100,7 +102,11 @@ function FARM(fMRI_filename, lambda, output_foldername, thres, dirname)
         end
     end
 	% Save all the files
-    csvwrite(strcat(output_foldername,'/beta.csv'),Beta);
+    
+    % Find the non-zero entries and save in the format (index,value)
+    [row,col,v] = find(Beta);
+    dlmwrite(strcat(output_foldername,'/beta.csv'),[col row v], ',', 0);
+    
     nii_file = make_nii(single(invbeta1));
     nii_file.hdr = intial_location.hdr;
     nii_file.hdr.dime.dim(5) = 1;
