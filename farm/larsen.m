@@ -29,8 +29,7 @@
 %
 
 
-function [b, g_out, steps] = larsen(flat_mri, model_index, g, max_l1, min_l2, max_ss, max_steps)
-
+function [b, g_out, step, err] = larsen(flat_mri, model_index, g, max_l1, min_l2, max_ss, max_steps)
 
 X = double(flat_mri);
 X(:, model_index) = [];
@@ -83,7 +82,7 @@ while (length(A) < maxVariables) && (step < max_steps) && (G > g) && (err > min_
     Gram = X(:, A)' * X(:, A);
     % For a variant of algorithm that works on well conditioned matrices
     if (cond(Gram) > 1e2)
-      disp(sprintf('Index (%d %d) makes the matrix ill conditioned. Dropping', cidx, find(A == cidx)));
+      fprintf('Index (%d %d) makes the matrix ill conditioned. Dropping\n', cidx, find(A == cidx));
       A(find(A == cidx)) = [];
       continue
     end
@@ -100,7 +99,7 @@ while (length(A) < maxVariables) && (step < max_steps) && (G > g) && (err > min_
 
     gamma_tilde = b(A(1: end)) ./ (b(A(1: end)) - b_OLS(1: end, 1));
     gamma_tilde(gamma_tilde <= 0) = inf;
-    [gamma_tilde dropIdx] = min(gamma_tilde);
+    [gamma_tilde, dropIdx] = min(gamma_tilde);
 
     if isempty(I)
         gamma = 1;
@@ -108,7 +107,7 @@ while (length(A) < maxVariables) && (step < max_steps) && (G > g) && (err > min_
         cd = X'*d;
         temp = [(c(I) - cmax) ./ (cd(I) - cmax); (c(I) + cmax) ./ (cd(I) + cmax)];
         inds1 = find(temp>0);
-        [temp2 inds2] = sort(temp(temp > 0));
+        [temp2, inds2] = sort(temp(temp > 0));
         % display('temp2(1:10)'); display(temp(A)); display(temp2(1:10)); display(inds2(1:10));
         if isempty(temp2)
             printf('Error no +ve direction\n');
@@ -143,11 +142,11 @@ while (length(A) < maxVariables) && (step < max_steps) && (G > g) && (err > min_
     end
     G_array = X(:,A)' * (y - mu) ./ sb(A) / err;
     if ((max(G_array) - min(G_array)) / max(G_array) > 1e-5)
-        disp(sprintf('Warning: Active sets do not seem to have same derivatives (possible numerical unstability)\nMax_g min_g %g %g %g\n', max(G_array), min(G_array), (max(G_array)-min(G_array))/max(G_array)));
+        fprintf('Warning: Active sets do not seem to have same derivatives (possible numerical unstability)\nMax_g min_g %g %g %g\n\n', max(G_array), min(G_array), (max(G_array)-min(G_array))/max(G_array));
     end
     G = min(G_array);
     % display(A);
-    disp(sprintf('Step %d, size(A) %d, err %g, L1 %g, G %g\n', step, length(A), err, l1, G));
+    fprintf('Step %d, size(A) %d, err %g, L1 %g, G %g\n\n', step, length(A), err, l1, G);
     % display(b(A)); 
     % display(A);
     check = (X(:, A)' * X(:, A) * b(A) - X(:, A)' * y) ./ (err * sign(b(A))); % = -g
@@ -167,25 +166,25 @@ while (length(A) < maxVariables) && (step < max_steps) && (G > g) && (err > min_
 end
 
 if (err < min_l2) 
-    disp(sprintf('Applying error bound correction: quadratic equation here. Err %g min_l2 %g\n', err, min_l2));
+    fprintf('Applying error bound correction: quadratic equation here. Err %g min_l2 %g\n\n', err, min_l2);
     % Apply L2 error correction here. Update G and L1 norms.
 end
 if (l1 > max_l1)
-    disp(sprintf('Applying L1 bound correction: L1 %g max_l1 %g\n', l1, max_l1));
+    fprintf('Applying L1 bound correction: L1 %g max_l1 %g\n\n', l1, max_l1);
     % Apply L1 error correction here. Update G.
 end
 if (G < g)
-    disp(sprintf('Applying G  correction:G %g g %g\n', G, g));
+    fprintf('Applying G  correction:G %g g %g\n\n', G, g);
     % Apply G correction here (already done below. Need to just move.
 end
 
 g_out = G;
 
 tmp = b;
-display('beta before');
+disp('beta before');
 % display(b(A));
 c = X' * (y - X * b);
-disp(sprintf('c(A) max, min; c(I) %g %g %g %g\n', max(abs(c(A))), min(abs(c(A))), max(c(I)), min(c(I))));
+fprintf('c(A) max, min; c(I) %g %g %g %g\n\n', max(abs(c(A))), min(abs(c(A))), max(c(I)), min(c(I)));
 
 sg = sign(b(A));
 if lassoCond
@@ -203,7 +202,7 @@ r = -Yh' * Yh;
 a21 = (-q + sqrt(q * q - 4 * p * r)) / (2 * p);
 a22 = (-q - sqrt(q * q - 4 * p * r)) / (2 * p);
 if a21 > 0 && a22 > 0
-display('controversy');
+disp('controversy');
 elseif a21 > 0
 a2 = a21;
 elseif a22 > 0
@@ -214,10 +213,10 @@ display(a2);
 
 b(A) = inv(XA' * XA) * (XA' * y - g * a2 * sg);
 
-display('beta after');
+disp('beta after');
 % display(b(A));
 c = X' * (y - X * b);
-disp(sprintf('c(A) max, min; c(I) %g %g %g %g\n', max(abs(c(A))), min(abs(c(A))), max(c(I)), min(c(I))));
+fprintf('c(A) max, min; c(I) %g %g %g %g\n\n', max(abs(c(A))), min(abs(c(A))), max(c(I)), min(c(I)));
 % verify = sum(sign(tmp) == sign(b(A)));
 % verify = verify == size(A, 2);
 % display('signs match?');
@@ -225,7 +224,7 @@ disp(sprintf('c(A) max, min; c(I) %g %g %g %g\n', max(abs(c(A))), min(abs(c(A)))
 
 verify = sum(sg == sign(b(A)));
 verify = verify == size(A, 2);
-display('signs match?');
+disp('signs match?');
 display(verify);
 % 306 319
 end

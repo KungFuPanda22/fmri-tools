@@ -4,10 +4,10 @@ function FARM(fMRI_filename, lambda, output_foldername, thres, dirname)
 	
 	% add library path
 	% library_location  = char('/usr/lib/granger/');
-	disp(sprintf('Dirname is %s', dirname))
+	fprintf('Dirname is %s\n', dirname)
 	addpath(dirname);
 	path = sprintf('%s/../utils/nifti', dirname);
-	disp(sprintf('Adding path %s', path));
+	fprintf('Adding path %s\n', path);
 	addpath(path);
 	
 	% load nii fmri file 
@@ -48,19 +48,19 @@ function FARM(fMRI_filename, lambda, output_foldername, thres, dirname)
     for i1 = 1:b1
         
         disp(i1);
-        number1 = number;
-        number1(:,i1) = [];
-        temp1 = number(2:d,i1);
-        temp2 = number1(1:(d-1),:);
+       % number1 = number;
+       % number1(:,i1) = [];
+       % temp1 = number(2:d,i1);
+       % temp2 = number1(1:(d-1),:);
         
         % normalize data
-        new = zscore(temp1) ;
-        new1 = zscore(temp2);
+        %new = zscore(temp1) ;
+        %new1 = zscore(temp2);
         
 		% Lasso function
 	fprintf('Calling  farmlasso with g=%g\n', sscanf(lambda, '%g'));
-        [beta ,steps,G,residuals,error,drop] = farmlasso(new1, new, 100, false, 0, 0, sscanf(lambda, '%g'));
-
+        %[beta ,steps,G,residuals,error,drop] = farmlasso(new1, new, 100, false, 0, 0, sscanf(lambda, '%g'));
+        [beta,G, steps, residuals] = larsen(number, i1, sscanf(lambda, '%g'), 0, 0, 0, 100) ;
         if i1 == 1
             Beta(i1,1) = 0;
             Beta(i1,2:b1) = beta; 
